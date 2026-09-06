@@ -4,6 +4,8 @@
 
 - CRP 开发手册：crp-development.md
 - CRP Development Handbook：crp-development.en.md
+- DuckDB 扩展契约：duckdb-extension.md
+- DuckDB Extension Contract：duckdb-extension.en.md
 
 ## 文档状态
 

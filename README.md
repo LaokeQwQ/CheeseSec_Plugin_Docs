@@ -20,3 +20,13 @@ identity.
 
 Runtime installation, OTA, and CWEDP pull are not claimed until CheeseWAF's
 stage board records executable evidence.
+
+## Optional DuckDB analysis extension
+
+The DuckDB extension is a contract-only, optional sidecar/CLI plan for cross-cluster
+analysis and audit. It is disabled and absent by default, does not enter the WAF request
+path or state stores, and does not expose a network service.
+
+See docs/duckdb-extension.md and docs/duckdb-extension.en.md. They define package layout,
+offline/online delivery, signing-root rotation, compatibility gates, and audit restrictions.
+They are not a claim that the extension is implemented or generally available.
