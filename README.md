@@ -69,3 +69,18 @@ path or state stores, and does not expose a network service.
 See docs/duckdb-extension.md and docs/duckdb-extension.en.md. They define package layout,
 offline/online delivery, signing-root rotation, compatibility gates, and audit restrictions.
 They are not a claim that the extension is implemented or generally available.
+
+## Store and OTA contract mirror
+
+The bilingual store and OTA contract in docs/store-ota.md mirrors the publication
+repository's machine-readable policies and schemas. policy/, catalog/, and ota/
+are intentionally fail-closed with empty live indexes. The six trust levels,
+immutable release records, append-only withdrawals, offline CRP inputs, 34A
+sidecar descriptor, fixed endpoint policy, and CWEDP pull-only boundary are
+validated by scripts/validate_commercial_contracts.py.
+
+Run the mirror gate locally:
+
+    python3 -m venv /tmp/cheesesec-plugin-docs-ci
+    /tmp/cheesesec-plugin-docs-ci/bin/pip install -r requirements-ci.txt
+    /tmp/cheesesec-plugin-docs-ci/bin/python scripts/validate_commercial_contracts.py
