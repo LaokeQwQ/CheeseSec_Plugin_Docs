@@ -19,6 +19,8 @@ The v1 manifest uses `api_version`, `kind`, `name`, `plugin_id`, `version`,
 `digests`, and `artifact`. See the minimal archive in
 [`examples/crp-v1/`](examples/crp-v1/). Its Chinese and English instructions
 are `README.md` and `README.en.md`; it has no signature and cannot be installed.
+The mirrored publication schemas are in [`schema/crp-v1/`](schema/crp-v1/);
+they validate shape and archive metadata, not signature trust or activation.
 
 | Function | Domain |
 |---|---|
@@ -33,6 +35,26 @@ identity.
 
 Runtime installation, OTA, and CWEDP pull are not claimed until CheeseWAF's
 stage board records executable evidence.
+
+## Validation gate
+
+The mirrored CRP v1 schemas are in `schema/crp-v1/`. The handbook CI validates
+the schemas, every example manifest and signature set, artifact size/digests,
+the exact three-entry archive layout, local Markdown links, and tracked-file
+secret/release-artifact rules. Run the same checks locally:
+
+```sh
+python3 -m venv /tmp/cheesesec-plugin-docs-ci
+/tmp/cheesesec-plugin-docs-ci/bin/pip install -r requirements-ci.txt
+/tmp/cheesesec-plugin-docs-ci/bin/python scripts/check_workflow_policy.py
+/tmp/cheesesec-plugin-docs-ci/bin/python scripts/validate_crp_v1.py
+/tmp/cheesesec-plugin-docs-ci/bin/python scripts/secret_scan.py
+git diff --check
+```
+
+The schema copy is kept byte-for-byte aligned with the publication repository's
+canonical schema IDs. Validation dependencies and generated `.crp` files are
+not runtime content and must not be committed.
 
 `package_id`, `class`, target API, platform/architecture, permissions, SBOMs,
 and `provenance/` are v2 or extension planning. They need a new schema, parser,

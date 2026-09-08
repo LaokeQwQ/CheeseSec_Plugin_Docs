@@ -1,0 +1,7 @@
+# Protect the handbook, examples, schemas, and validation workflow.
+* @LaokeQwQ
+/.github/ @LaokeQwQ
+/docs/ @LaokeQwQ
+/examples/ @LaokeQwQ
+/schema/ @LaokeQwQ
+/scripts/ @LaokeQwQ

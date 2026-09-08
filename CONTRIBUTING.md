@@ -4,6 +4,10 @@
 
 提交文档前请检查中英文含义、配置键、域名、版本和许可证，并运行 git diff --check。安全敏感示例必须写明确认次数、10 秒等待、审计、回滚和离线行为。
 
+提交前还必须运行 CRP schema、示例归档、双语页面、链接和 secret scan
+门禁（见 README 的本地命令）。schema 只描述当前 v1 可执行边界；生成的
+`.crp`、私钥、Token、密码和构建输出不得提交。
+
 当前 v1 CRP 示例只能包含 `manifest.json`、一个 `artifact/<file>` 和
 `signatures/manifest.json`。`provenance/`、`package_id`、`class`、目标 API、
 平台/架构、权限等内容必须明确标为 v2/规划，不能混入当前 Get Started。
