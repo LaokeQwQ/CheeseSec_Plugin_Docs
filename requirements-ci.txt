@@ -4,5 +4,5 @@
 attrs==24.2.0
 jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
-referencing==0.35.1
+referencing==0.37.0
 rpds-py==0.30.0
