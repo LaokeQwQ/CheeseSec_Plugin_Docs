@@ -9,13 +9,32 @@
 - 采集器异步生成按时间窗口分片的 Parquet 快照；分析进程只读，失败、超时或崩溃不得改变数据面决策。候选策略只能输出声明式快照或 hint，仍由核心验证、编译、Canary 和原子加载流程决定是否采用。
 - 默认拒绝外部出站。在线目录/资源访问必须经短时 Socket Lease；离线环境应仅凭本地 CRP、信任根和缓存撤销快照完成验证。
 
-## CRP 资源包格式
+## CRP v1 边界
 
-CRP 是可离线验证的 .crp 归档，至少包含 manifest.json、artifact/、signatures/ 和 provenance/。artifact 不得放入 DuckDB 二进制；provenance 应含 source root、构建记录、SBOM 摘要和发布者声明。
+当前 CheeseWAF 只执行 CRP v1 的三条目归档：`manifest.json`、一个
+`artifact/<file>` 普通文件和 `signatures/manifest.json`。解析器会拒绝
+未知条目、目录、符号链接、重复路径、路径穿越和大小超限。`provenance/`
+不属于 v1，因此不能放进当前 Get Started 示例或当前 `.crp` 包。
 
-Manifest 使用 crp.cheesewaf.io/v1，固定声明 package_id、class、namespace、publisher、SemVer、source_root、release_sequence、artifact_size、sha256、sha1、md5、目标 CheeseWAF/扩展 API、平台/架构、最低审计事件版本和权限声明。SHA-256 是内容身份；MD5/SHA-1 只用于传输完整性和断点续传。路径、大小、摘要、序号、来源根或签名集合缺失、不匹配、降序或被镜像改写时必须拒绝，管理员确认不得绕过。
+v1 Manifest 只使用 CheeseWAF 当前解析器允许的字段：`api_version`、`kind`、
+`name`、`plugin_id`、`version`、`namespace`、`publisher`、`source`、
+`source_root`、`release_sequence`、`digests` 和 `artifact`（含可选的
+`name`、`size`、`digests`）。解析器拒绝未知字段。三种摘要必须存在且匹配；
+SHA-256 是内容身份，MD5/SHA-1 只用于传输完整性和断点续传。
 
-扩展包不得携带 DuckDB 可执行文件、动态库、容器镜像、监听服务或生产密钥。未来如需本机 DuckDB，必须由宿主受控依赖单独提供，并在兼容矩阵登记，不能通过 CRP 偷渡。
+最小的 v1 归档示例见 [`../examples/crp-v1/`](../examples/crp-v1/)。该示例
+使用空签名数组，只用于验证归档布局；它不能通过 `Import`，也不能安装。
+
+## v2 和 DuckDB 扩展规划
+
+`package_id`、`class`、目标 CheeseWAF/扩展 API、平台/架构、最低审计事件版本、
+权限声明和 `provenance/` 目录属于后续 v2 规划，不是当前 v1 字段。DuckDB
+专用字段、SBOM、构建记录和宿主版本矩阵也必须等新的 schema、签名覆盖范围、
+迁移说明和回归测试完成后再加入。
+
+以下内容是规划中的策略，不是当前 v1 解析器已经执行的检查：扩展包不应携带
+DuckDB 可执行文件、动态库、容器镜像、监听服务或生产密钥；未来如需本机
+DuckDB，应由宿主单独提供，并在兼容矩阵中登记。
 
 ## 离线与在线安装
 
@@ -25,9 +44,9 @@ Manifest 使用 crp.cheesewaf.io/v1，固定声明 package_id、class、namespac
 
 ## 签名根和轮换
 
-官方与企业普通发布至少 2-of-3，严重操作至少 3-of-5；企业根独立且不能降低平台最低阈值。社区、个人、测试、开发根默认需管理员确认，密钥有效期上限分别为 1 年、1 年、30 天、7 天；官方/企业签名密钥上限为 3 年。根证书、密钥 ID、用途、有效期和撤销状态须在 manifest/provenance 可追溯。
+在 v2/扩展规划中，官方与企业普通发布至少 2-of-3，严重操作至少 3-of-5；企业根独立且不能降低平台最低阈值。社区、个人、测试、开发根默认需管理员确认，密钥有效期上限分别为 1 年、1 年、30 天、7 天；官方/企业签名密钥上限为 3 年。根证书、密钥 ID、用途、有效期和撤销状态须在规划中的 manifest/provenance 中可追溯。当前 v1 不包含这些字段。
 
-根轮换采用新旧根交叉签名窗口：先发布旧根签名的新信任元数据，再在窗口内接受新根签名包，最后撤销旧根；不得覆盖原根记录。离线站点通过签名根更新包和管理员确认导入；无法证明连续性时保持旧根并拒绝新包。撤销、紧急停发和泄露处置写入审计，并支持按 package_id、source root 和 key ID 精确阻断。
+根轮换是 v2/扩展规划：采用新旧根交叉签名窗口，先发布旧根签名的新信任元数据，再在窗口内接受新根签名包，最后撤销旧根；不得覆盖原根记录。离线站点通过签名根更新包和管理员确认导入；无法证明连续性时保持旧根并拒绝新包。撤销、紧急停发和泄露处置写入审计，并支持按规划中的 package_id、source root 和 key ID 精确阻断。
 
 ## 兼容矩阵和审计限制
 

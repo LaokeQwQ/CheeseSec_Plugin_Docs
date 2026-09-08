@@ -9,11 +9,39 @@ This contract maps to roadmap items 32C, 33B, and 34A+. It defines delivery boun
 - Collectors asynchronously produce time-windowed Parquet snapshots. Analysis is read-only; failure, timeout, or crash cannot change data-plane decisions. Policy candidates are declarative snapshots or hints and still require core validation, compilation, canary, and atomic loading.
 - External egress is denied by default. Online catalog/resource access requires a short-lived Socket Lease; offline verification uses local CRP, trust roots, and a cached revocation snapshot.
 
-## CRP resource package
+## CRP v1 boundary
 
-An offline-verifiable .crp archive contains at least manifest.json, artifact/, signatures/, and provenance/. Artifact must not contain a DuckDB binary; provenance records source root, build record, SBOM digest, and publisher statement.
+The current CheeseWAF parser executes a three-entry CRP v1 archive: `manifest.json`,
+exactly one regular `artifact/<file>`, and `signatures/manifest.json`. It rejects
+unknown entries, directories, symlinks, duplicate paths, traversal paths, and
+entries over the configured limits. `provenance/` is not part of v1 and must not
+appear in the current Get Started example or current `.crp` package.
 
-The crp.cheesewaf.io/v1 manifest declares package identity/class/namespace/publisher, SemVer, source_root, release_sequence, artifact_size, sha256, sha1, md5, target CheeseWAF/extension API, platform/architecture, minimum audit-event version, and permissions. SHA-256 is content identity; MD5/SHA-1 are transport/resume checks only. Missing or mismatched paths, sizes, digests, sequence, source root, or signatures are hard failures and cannot be overridden. Packages must not carry a DuckDB executable, dynamic library, container image, listening service, or production secret; a host-provided DuckDB is a separately controlled dependency in the matrix.
+The v1 manifest uses only fields accepted by the current parser: `api_version`,
+`kind`, `name`, `plugin_id`, `version`, `namespace`, `publisher`, `source`,
+`source_root`, `release_sequence`, `digests`, and `artifact` (with optional
+`name`, `size`, and `digests`). Unknown fields are rejected. All three digests
+must be present and match; SHA-256 is the content identity, while MD5/SHA-1 are
+transport-integrity and resume checks only.
+
+See the minimal v1 archive example in [`../examples/crp-v1/`](../examples/crp-v1/).
+It uses an empty signature array to demonstrate layout only; it cannot pass
+`Import` or be installed.
+
+## v2 and DuckDB extension planning
+
+`package_id`, `class`, target CheeseWAF/extension API, platform/architecture,
+minimum audit-event version, permission declarations, and a `provenance/`
+directory are planned v2 additions, not current v1 fields. DuckDB-specific
+fields, SBOMs, build records, and host-version matrices also require a new
+schema, signature coverage, migration notes, and regression tests before they
+can be added.
+
+The following remain planned policy, not checks executed by the current v1
+parser: a package should not carry a DuckDB executable, dynamic library,
+container image, listening service, or production secret. If a host DuckDB is
+needed later, the host must provide it as a separately controlled dependency
+recorded in the compatibility matrix.
 
 ## Offline and online installation
 
@@ -23,9 +51,9 @@ Online installation gets metadata only from the catalog and packages only from i
 
 ## Signing roots and rotation
 
-Official/enterprise normal releases require at least 2-of-3 signatures; high-risk operations require 3-of-5. Enterprise roots are independent and cannot lower the platform minimum. Community, personal, test, and development roots require administrator confirmation by default; key lifetimes are capped at 1 year, 1 year, 30 days, and 7 days. Official/enterprise signing keys are capped at 3 years. Root certificate, key ID, purpose, validity, and revocation must be traceable in manifest/provenance.
+In the v2/extension plan, official and enterprise normal releases require at least 2-of-3 signatures and high-risk operations require 3-of-5. Enterprise roots are independent and cannot lower the platform minimum. Community, personal, test, and development roots require administrator confirmation by default; key lifetimes are capped at 1 year, 1 year, 30 days, and 7 days. Official/enterprise signing keys are capped at 3 years. Root certificate, key ID, purpose, validity, and revocation must be traceable in the planned manifest/provenance. Current v1 has none of these fields.
 
-Use an old/new cross-signing window: publish new trust metadata signed by the old root, accept new-root packages during the window, then revoke the old root. Never overwrite the old record. Offline sites import a signed root-update package with administrator confirmation; if continuity cannot be proven, retain the old root and reject the package. Audit revocation, emergency suspension, and compromise response, with precise blocking by package ID, source root, and key ID.
+Root rotation is part of the v2/extension plan: use an old/new cross-signing window, publish new trust metadata signed by the old root, accept new-root packages during the window, then revoke the old root. Never overwrite the old record. Offline sites import a signed root-update package with administrator confirmation; if continuity cannot be proven, retain the old root and reject the package. Audit revocation, emergency suspension, and compromise response, with precise blocking by the planned package ID, source root, and key ID.
 
 ## Compatibility matrix and audit restrictions
 

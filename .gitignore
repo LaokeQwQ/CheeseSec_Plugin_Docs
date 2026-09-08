@@ -16,6 +16,8 @@ dist/
 build/
 coverage/
 *.tmp
+*.crp
+*.zip
 
 # Agent/editor tooling and OS files
 node_modules/

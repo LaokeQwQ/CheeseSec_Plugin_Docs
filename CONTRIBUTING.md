@@ -4,7 +4,12 @@
 
 提交文档前请检查中英文含义、配置键、域名、版本和许可证，并运行 git diff --check。安全敏感示例必须写明确认次数、10 秒等待、审计、回滚和离线行为。
 
-CRP 示例不得包含私钥、Token、密码、客户数据或生成产物。贡献者应说明信任级别、签名阈值、密钥有效期、吊销方式、审批记录和变更记录。Ansible 只描述 bootstrap；安装、升级、回滚和集群分发只描述 CWEDP。
+当前 v1 CRP 示例只能包含 `manifest.json`、一个 `artifact/<file>` 和
+`signatures/manifest.json`。`provenance/`、`package_id`、`class`、目标 API、
+平台/架构、权限等内容必须明确标为 v2/规划，不能混入当前 Get Started。
+示例不得包含私钥、Token、密码、客户数据或生成产物。贡献者应说明信任级别、
+签名阈值、密钥有效期、吊销方式、审批记录和变更记录。Ansible 只描述
+bootstrap；安装、升级、回滚和集群分发只描述 CWEDP。
 
 新增页面时，同时维护中文和英文入口，并在页面中链接权威 contract。域名固定为 store.cheesesec.com、ota.cheesesec.com 和 res.cheesesec.com；离线包统一称为 .crp（CheeseWAF Resources Package）。
 
