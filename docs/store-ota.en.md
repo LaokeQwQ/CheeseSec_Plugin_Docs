@@ -1,6 +1,6 @@
 # Store and OTA Contract (v1, contract-only)
 
-This handbook defines the CheeseSec catalog, OTA, resource endpoints, and plugin runtime boundary. It is an auditable publication contract, not a claim that online services or an installer are deployed. Machine-readable schemas live in CheeseSec_Plugin/schema/store-v1/ and are mirrored under https://store.cheesesec.com/schema/store/v1/.
+This handbook defines the CheeseSec catalog, OTA, resource endpoints, and plugin runtime boundary. It is an auditable publication contract, not a claim that online services or an installer are deployed. Machine-readable schemas live in CheeseSec_Plugin/schema/store-v1/ and are mirrored under https://store.cheesesec.com/schema/store/v1/. The Pages, Worker, R2, and server split is defined in [the Cloudflare edge routing contract](cloudflare-routing.en.md).
 
 ## Three fixed endpoints
 
@@ -11,6 +11,14 @@ This handbook defines the CheeseSec catalog, OTA, resource endpoints, and plugin
 | https://res.cheesesec.com | immutable resource | GET, HEAD | URL is bound to a SHA-256 content address; redirects denied |
 
 Endpoints accept no plugin credentials. Online pulls require administrator password confirmation, a one-shot Socket Lease, and audit. Offline mode must make zero network requests.
+
+## Edge and server split
+
+Catalog, policy, schema, OTA indexes, and content-addressed resources are public read surfaces. The Worker accepts only `GET` and `HEAD` and reads R2 through fixed paths. An unknown Host returns `421`; an unknown path returns `404`; neither is forwarded to the server.
+
+Console, management APIs, authentication, setup, approvals, CRP activation, CWEDP, diagnostic uploads, SSE, and WebSocket traffic stay on the server. The Worker may proxy only to the configured `ORIGIN_BASE_URL` and adds the Cloudflare Access identity and Origin HMAC. The server still performs Session, CSRF, RBAC, and audit checks, and `admin_listen` remains on loopback.
+
+The complete object-key, cache, header, and release checklist is in [the Cloudflare edge routing contract](cloudflare-routing.en.md) and [its Chinese version](cloudflare-routing.md).
 
 ## Trust levels
 
