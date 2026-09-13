@@ -20,6 +20,8 @@ Console, management APIs, authentication, setup, approvals, CRP activation, CWED
 
 The complete object-key, cache, header, and release checklist is in [the Cloudflare edge routing contract](cloudflare-routing.en.md) and [its Chinese version](cloudflare-routing.md).
 
+The publication repository uses `scripts/build_publication_bundle.py` to create a deterministic R2 bundle. The builder runs the contract checks first and copies only JSON publication objects plus a digest manifest. It does not read signing private keys or create CRP archives. `scripts/publish_r2.sh` prints a publication plan by default; only an explicit `--apply` writes to R2. The script checks the current catalog pointer sequence and uploads versioned objects before public objects and pointers.
+
 ## Trust levels
 
 The six supported namespaces are official, enterprise, community, personal, test, and development. Trust level describes provenance and never grants runtime capability; capability is still controlled by the sidecar descriptor, resource limits, approval, and policy.

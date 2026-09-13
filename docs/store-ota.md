@@ -20,6 +20,8 @@
 
 对象键、缓存类别、请求头和上线检查的完整约束见 [Cloudflare 边缘路由契约](cloudflare-routing.md) 与 [英文版本](cloudflare-routing.en.md)。
 
+发布仓库使用 `scripts/build_publication_bundle.py` 生成确定性的 R2 发布包。脚本会先运行契约检查，只复制 JSON 发布对象和摘要清单，不读取签名私钥，也不创建 CRP。`scripts/publish_r2.sh` 默认只打印发布计划；只有显式传入 `--apply` 才会写入 R2，并且会先检查当前目录指针的序号，再按「版本化对象、公开对象、指针」的顺序上传。
+
 ## 信任级别
 
 支持 official、enterprise、community、personal、test 和 development 六类命名空间。信任级别只表达来源，不授予运行能力：能力仍由 sidecar descriptor、资源限制、审批和策略决定。
