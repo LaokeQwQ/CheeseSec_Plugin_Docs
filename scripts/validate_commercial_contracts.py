@@ -64,6 +64,28 @@ def validate() -> None:
     catalog_schema["properties"]["releases"]["items"] = schemas["release"]
     _validate(contracts["catalog"], catalog_schema, "catalog index")
     _validate(contracts["ota"], schemas["ota"], "OTA index")
+    endpoints = {entry["id"]: entry for entry in contracts["endpoints"]["endpoints"]}
+    expected_paths = {
+        "store": [
+            "/v1/catalog/index.json",
+            "/v1/policy/endpoints.json",
+            "/v1/policy/trust-roots.json",
+            "/v1/policy/source-registry.json",
+            "/v1/policy/revocations.json",
+            "/v1/schema/store/{name}.schema.json",
+            "/v1/schema/crp/{name}.schema.json",
+        ],
+        "ota": ["/v1/channels/{channel}/index.json"],
+        "resources": ["/sha256/{sha256}/{filename}"],
+    }
+    if {key: endpoints[key]["paths"] for key in expected_paths} != expected_paths:
+        raise ValueError("endpoint paths do not match the fixed edge route contract")
+    if any(entry["origin_role"] != "edge-public-r2" for entry in endpoints.values()):
+        raise ValueError("public publication endpoints must use the edge-public-r2 origin role")
+    if endpoints["store"]["cache_class"] != "short-revalidate" or endpoints["ota"]["cache_class"] != "short-revalidate":
+        raise ValueError("store and OTA indexes must use short revalidation")
+    if endpoints["resources"]["cache_class"] != "immutable":
+        raise ValueError("resource endpoint must use immutable caching")
     if contracts["cwedp"]["pull_only"] is not True or contracts["cwedp"]["ansible_push"] is not False:
         raise ValueError("CWEDP must be pull-only and Ansible push must be disabled")
     if contracts["sidecar"]["runtime"] != "sidecar" or contracts["sidecar"]["metadata"]["request_path"] != "asynchronous":
