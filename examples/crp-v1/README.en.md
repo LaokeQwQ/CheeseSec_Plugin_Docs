@@ -2,8 +2,9 @@
 
 This directory demonstrates the archive layout currently accepted by
 `CheeseWAF/internal/crp.ParseArchive`. It is not an installable plugin: the
-`signatures/manifest.json` file contains an empty array and no real private key
-or signature.
+`signatures/manifest.json` file contains two verifiable official Ed25519
+signatures; private keys are never stored and validation uses
+`policy/trust-roots.json`.
 
 Create an archive from this directory by selecting only the three files below.
 Do not run `zip -r .`; that would include this README and the v1 parser would
