@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
+
+try:
+    from scripts.signature_verifier import verify_signature_set
+except ModuleNotFoundError:
+    from signature_verifier import verify_signature_set
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = ROOT.parent / "CheeseSec_Plugin"
@@ -36,7 +43,7 @@ def _validate(instance: Any, schema: dict[str, Any], label: str) -> None:
 
 
 def validate() -> None:
-    names = ["trust-levels", "endpoint-policy", "cwedp", "release", "catalog", "ota", "sidecar-descriptor", "offline-import"]
+    names = ["trust-levels", "endpoint-policy", "cwedp", "release", "catalog", "ota", "sidecar-descriptor", "offline-import", "trust-roots", "source-registry", "revocations"]
     schemas = {name: strict_load(SCHEMA_DIR / f"{name}.schema.json") for name in names}
     for name, schema in schemas.items():
         Draft202012Validator.check_schema(schema)
@@ -53,13 +60,44 @@ def validate() -> None:
         "ota": strict_load(ROOT / "ota" / "index.json"),
         "sidecar": strict_load(ROOT / "examples" / "store-v1" / "sidecar-descriptor.json"),
         "release": strict_load(ROOT / "examples" / "store-v1" / "release-record.json"),
+        "trust_roots": strict_load(ROOT / "policy" / "trust-roots.json"),
+        "source_registry": strict_load(ROOT / "policy" / "source-registry.json"),
+        "revocations": strict_load(ROOT / "policy" / "revocations.json"),
     }
     _validate(contracts["trust"], schemas["trust-levels"], "trust-levels policy")
     _validate(contracts["endpoints"], schemas["endpoint-policy"], "endpoint policy")
     _validate(contracts["cwedp"], schemas["cwedp"], "CWEDP policy")
     _validate(contracts["offline"], schemas["offline-import"], "offline import policy")
+    _validate(contracts["trust_roots"], schemas["trust-roots"], "trust roots")
+    _validate(contracts["source_registry"], schemas["source-registry"], "source registry")
+    _validate(contracts["revocations"], schemas["revocations"], "revocation snapshot")
     _validate(contracts["sidecar"], schemas["sidecar-descriptor"], "sidecar descriptor")
     _validate(contracts["release"], schemas["release"], "release example")
+    evidence = contracts["release"]["signature_evidence"]
+    if evidence["status"] != "verified" or not evidence["valid_key_ids"]:
+        raise ValueError("release example must carry non-empty verified signature evidence")
+    if evidence["source_root"] != contracts["release"]["source_root"] or evidence["trust_level"] != contracts["release"]["trust_level"] or evidence["release_sequence"] != contracts["release"]["release_sequence"]:
+        raise ValueError("release example signature identity is not bound")
+    roots = {root["key_id"]: root for root in contracts["trust_roots"]["roots"]}
+    evidence_until = datetime.fromisoformat(evidence["valid_until"].replace("Z", "+00:00"))
+    if evidence_until <= datetime.now(timezone.utc):
+        raise ValueError("release example signature evidence is expired")
+    for key_id in evidence["valid_key_ids"]:
+        root_until = datetime.fromisoformat(roots[key_id]["valid_until"].replace("Z", "+00:00"))
+        if evidence_until > root_until:
+            raise ValueError("release example signature evidence exceeds root validity")
+    manifest_path = ROOT / "examples" / "crp-v1" / "manifest.json"
+    signature_path = ROOT / "examples" / "crp-v1" / "signatures" / "manifest.json"
+    verification = verify_signature_set(
+        manifest_path.read_bytes(),
+        signature_path.read_bytes(),
+        contracts["trust_roots"],
+        contracts["source_registry"],
+        contracts["revocations"],
+        now=datetime.now(timezone.utc),
+    )
+    if verification["manifest_sha256"] != evidence["manifest_sha256"] or hashlib.sha256(signature_path.read_bytes()).hexdigest() != evidence["signature_set_sha256"]:
+        raise ValueError("release example digest evidence is not bound to CRP signature inputs")
     catalog_schema = copy.deepcopy(schemas["catalog"])
     catalog_schema["properties"]["releases"]["items"] = schemas["release"]
     _validate(contracts["catalog"], catalog_schema, "catalog index")

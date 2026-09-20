@@ -46,9 +46,10 @@ content identity. Missing or mismatched digests are hard failures and cannot be
 overridden by an administrator.
 
 `signatures/manifest.json` contains the current `Signature` fields: `key_id`,
-`algorithm`, `value`, and optional `signed_at`. The empty array in the example
-only proves archive layout; it does not pass `Import`, which still requires a
-valid trust root and signature threshold.
+`algorithm`, `value`, `source_root`, `trust_level`, `release_sequence`,
+`manifest_sha256`, `signed_at`, and `expires_at`. The example carries two
+verifiable official Ed25519 signatures. A real `Import` still requires local
+trust-root, threshold, validity-window, and revocation checks.
 
 See the minimal parseable, non-installable example in
 [`examples/crp-v1/`](../examples/crp-v1/).
@@ -82,9 +83,14 @@ administrator sessions, or raw request bodies. External egress is denied by
 default; temporary connectivity requires a short-lived Socket Lease.
 
 Release order is `build → test → sign → publish → observe → staged → canary → promote`.
-Rollback creates a new control-plane revision; it does not replay an old package.
-CheeseWAF must record executable evidence for installation, OTA, CWEDP, and hot
-loading before this handbook describes those capabilities as available.
+The target lifecycle creates a new control-plane revision for rollback rather than
+replaying an old package. The current CheeseWAF code exposes only the local
+RuntimeStore staged/promote/rollback contract; the separate control plane is not
+wired. See the [Standalone Control Runtime](https://docs.cheesesec.com/docs/cheesewaf/control-plane-runtime/)
+page for the current `cheesewaf-control` command, probes, and fail-closed startup
+boundary; that entry does not provide plugin installation, OTA, CWEDP, or hot-load
+execution. CheeseWAF must record executable evidence for installation, OTA, CWEDP, and
+hot loading before this handbook describes those capabilities as available.
 
 ## v2 and extension planning
 
