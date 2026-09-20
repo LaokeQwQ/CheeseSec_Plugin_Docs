@@ -18,9 +18,9 @@ The v1 manifest uses `api_version`, `kind`, `name`, `plugin_id`, `version`,
 `namespace`, `publisher`, `source`, `source_root`, `release_sequence`,
 `digests`, and `artifact`. See the minimal archive in
 [`examples/crp-v1/`](examples/crp-v1/). Its Chinese and English instructions
-are `README.md` and `README.en.md`; it has no signature and cannot be installed.
+are `README.md` and `README.en.md`; it carries two verifiable official Ed25519 signatures but remains contract-only and cannot be installed by itself.
 The mirrored publication schemas are in [`schema/crp-v1/`](schema/crp-v1/);
-they validate shape and archive metadata, not signature trust or activation.
+they validate shape, archive metadata, and offline signature/source-root trust against local roots and validity windows.
 
 | Function | Domain |
 |---|---|
@@ -55,6 +55,8 @@ git diff --check
 The schema copy is kept byte-for-byte aligned with the publication repository's
 canonical schema IDs. Validation dependencies and generated `.crp` files are
 not runtime content and must not be committed.
+Offline verification uses only the local trust-roots, source-registry, and
+revocation inputs; no network request or signing key is accepted by the gate.
 
 `package_id`, `class`, target API, platform/architecture, permissions, SBOMs,
 and `provenance/` are v2 or extension planning. They need a new schema, parser,

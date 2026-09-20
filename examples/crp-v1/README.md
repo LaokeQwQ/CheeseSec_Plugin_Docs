@@ -1,7 +1,8 @@
 # CRP v1 最小归档示例
 
 这个目录只演示当前 `CheeseWAF/internal/crp.ParseArchive` 接受的归档布局。
-它不是可安装插件：`signatures/manifest.json` 使用空数组，没有真实私钥或签名。
+它不是可安装插件：`signatures/manifest.json` 包含两个可验证的 official
+Ed25519 签名；私钥不入库，校验使用 `policy/trust-roots.json`。
 
 从本目录生成归档时，只选择下面三个文件。不要使用 `zip -r .`，否则会把
 本说明文件也放进归档，当前 v1 解析器会拒绝未知条目。

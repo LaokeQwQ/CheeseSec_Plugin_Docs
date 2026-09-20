@@ -25,8 +25,8 @@ must be present and match; SHA-256 is the content identity, while MD5/SHA-1 are
 transport-integrity and resume checks only.
 
 See the minimal v1 archive example in [`../examples/crp-v1/`](../examples/crp-v1/).
-It uses an empty signature array to demonstrate layout only; it cannot pass
-`Import` or be installed.
+It carries two verifiable official Ed25519 signatures for layout and trust-gate
+checks, but remains contract-only and cannot pass runtime installation by itself.
 
 ## v2 and DuckDB extension planning
 
@@ -45,9 +45,24 @@ recorded in the compatibility matrix.
 
 ## Offline and online installation
 
-Offline installation imports the .crp and revocation snapshot from trusted media, verifies all package/security/compatibility/audit gates, and shows the change list for confirmation. Import writes only staging; success creates a new control-plane revision, failure cleans staging. Stale revocation state is recorded; high-risk or expired state remains pending and cannot be forced active.
+The target offline installation flow imports the .crp and revocation snapshot from
+trusted media, verifies all package/security/compatibility/audit gates, and shows
+the change list for confirmation. Import writes only staging; success creates a new
+control-plane revision, failure cleans staging. The current CheeseWAF code exposes
+only the local RuntimeStore contract and does not wire this control-plane flow.
+The separate [Standalone Control Runtime](https://docs.cheesesec.com/docs/cheesewaf/control-plane-runtime/)
+page documents the current `cheesewaf-control` command and fail-closed boundary; it does not provide plugin installation or activation.
+Stale revocation state is recorded; high-risk or expired state remains pending and
+cannot be forced active.
 
-Online installation gets metadata only from the catalog and packages only from immutable resources, binding both to local digests. OTA proposes a candidate revision and cannot load it directly. Short leases, rate limits, resumable chunks, and the same full verification as offline mode apply. Mirrors cannot change identity, root, sequence, or permissions. Install, upgrade, and rollback retain digest, operator, confirmations, source, audit events, and result; rollback creates a new revision to a verified version.
+The target online installation flow gets metadata only from the catalog and packages
+only from immutable resources, binding both to local digests. OTA proposes a
+candidate revision and cannot load it directly. Short leases, rate limits, resumable
+chunks, and the same full verification as offline mode apply. Mirrors cannot change
+identity, root, sequence, or permissions. Install, upgrade, and rollback retain
+digest, operator, confirmations, source, audit events, and result; rollback creates
+a new revision to a verified version. The current binary does not wire the catalog,
+OTA, lease, or control-plane executor. The separate `cheesewaf-control` entry does not provide plugin installation or activation.
 
 ## Signing roots and rotation
 
