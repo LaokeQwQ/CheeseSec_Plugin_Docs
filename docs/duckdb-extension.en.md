@@ -4,10 +4,11 @@ This contract maps to roadmap items 32C, 33B, and 34A+. It defines delivery boun
 
 ## Boundary and defaults
 
-- DuckDB is for cross-cluster analysis and audit only, running as an optional sidecar or CLI. It is disabled and absent from the default CheeseWAF release.
+- The DuckDB extension uses a `host-provided` asynchronous `one-shot-job` contract: the host supplies a controlled DuckDB version, and each job exits when complete. It is not a persistent sidecar or a user-facing CLI for arbitrary SQL. This repository currently contains only schemas, descriptors, policy, and fixtures; CheeseWAF has no job launcher or audit exporter wired in, and the default release does not include DuckDB.
 - It never enters the request hot path, writes PG/native-raft/Redis, shares a writable DuckDB file, or exposes a listening or remote database service.
-- Collectors asynchronously produce time-windowed Parquet snapshots. Analysis is read-only; failure, timeout, or crash cannot change data-plane decisions. Policy candidates are declarative snapshots or hints and still require core validation, compilation, canary, and atomic loading.
-- External egress is denied by default. Online catalog/resource access requires a short-lived Socket Lease; offline verification uses local CRP, trust roots, and a cached revocation snapshot.
+- A job reads only redacted Parquet snapshots from a trusted exporter and uses a parameterized query template registered by this repository. It must not execute arbitrary user SQL. The host must verify input signatures, file digests and schema, and enforce an OS sandbox and resource limits around DuckDB; none of these runtime controls has implementation evidence yet.
+- The only output is `analysis-record/v1`. Recommendations such as `contain` or `isolate` are analysis labels; they cannot become `risk-hint/v1`, policy candidates, ACLs, challenges, blocks, or policy updates.
+- DuckDB jobs deny network egress, request no Socket Lease, and do not access online catalogs or resource services.
 
 ## CRP v1 boundary
 
@@ -25,23 +26,25 @@ must be present and match; SHA-256 is the content identity, while MD5/SHA-1 are
 transport-integrity and resume checks only.
 
 See the minimal v1 archive example in [`../examples/crp-v1/`](../examples/crp-v1/).
-It carries two verifiable official Ed25519 signatures for layout and trust-gate
-checks, but remains contract-only and cannot pass runtime installation by itself.
+It carries two verifiable official Ed25519 signatures for archive-layout and
+signature-gate checks. It remains a contract fixture; it does not show a wired
+plugin runtime or prove that installation or activation is available.
 
-## v2 and DuckDB extension planning
+## v2 and runtime boundary
 
 `package_id`, `class`, target CheeseWAF/extension API, platform/architecture,
 minimum audit-event version, permission declarations, and a `provenance/`
-directory are planned v2 additions, not current v1 fields. DuckDB-specific
-fields, SBOMs, build records, and host-version matrices also require a new
-schema, signature coverage, migration notes, and regression tests before they
-can be added.
+directory are planned v2 additions, not current CRP v1 fields. The DuckDB
+`one-shot-job` descriptor and `analysis-record/v1` schema are defined here, but
+CheeseWAF has not wired an execution runtime. SBOMs, build records, and a formal
+host-version matrix still require schema, signature coverage, migration notes,
+and regression tests.
 
-The following remain planned policy, not checks executed by the current v1
-parser: a package should not carry a DuckDB executable, dynamic library,
-container image, listening service, or production secret. If a host DuckDB is
-needed later, the host must provide it as a separately controlled dependency
-recorded in the compatibility matrix.
+Extension packages must not carry a DuckDB executable, dynamic library,
+container image, listening service, or production secret. The host supplies
+DuckDB separately and records its version. The current CRP v1 parser checks
+archive structure and payload digests, not the file type of an arbitrary
+payload, so the extension publication gate must enforce this policy.
 
 ## Offline and online installation
 
@@ -79,10 +82,10 @@ Root rotation is part of the v2/extension plan: use an old/new cross-signing win
 | DuckDB | host-provided version range; CRP carries no binary |
 | Platform | OS, architecture, runtime ABI; unlisted combinations cannot activate |
 | Data | Parquet schema, audit-event version, timezone, compression constraints |
-| Security | capabilities, egress policy, Socket Lease, audit fields, rollback level |
+| Security | capabilities, deny egress, OS sandbox, audit fields, rollback level |
 
-The extension reads only minimized/redacted Parquet snapshots. It must not read raw request bodies, cookies, Authorization headers, tokens, keys, administrator sessions, or PG/Redis/native-raft. Queries require resource limits, timeout, cancellation, and result-size limits. Results are append-only audit records and cannot modify fact logs. Recommendations, availability signals, and alerts are observational outputs; they cannot weaken protocol/security floors, administrator hard rules, or core controls.
+The extension reads only signature-verified and validated redacted Parquet snapshots. It must not read raw request bodies, cookies, Authorization headers, tokens, keys, administrator sessions, or PG/Redis/native-raft. Queries use a fixed template and have input-size, time, CPU, memory, temporary-space, and result-size limits; an OS sandbox isolates files, network, and process resources. The only output is a provenance-bound append-only `analysis-record/v1`; it cannot modify fact logs. Analysis labels, alerts, and risk rankings cannot weaken protocol/security floors, administrator hard rules, or core controls.
 
 ## Acceptance status
 
-These documents are planning and contract drafts. They do not mean that the DuckDB extension, installer, OTA, CWEDP pull, or hot loading is implemented, released, or supported. Before launch, add executable evidence for offline/online installation, root rotation drills, compatibility tests, audit integrity, and rollback on the CheeseWAF stage board.
+These documents define an extension contract; they do not mean that the DuckDB job runtime, audit exporter, installer, OTA, CWEDP pull, or hot loading is implemented, released, or supported. Current gates validate schemas, descriptors, fixtures, and static contracts. They do not prove runtime enforcement of input signatures, Parquet contents, SQL templates, or OS sandboxing. Before integration, add runtime gates, resource limits, and isolation tests to the CheeseWAF stage board.
