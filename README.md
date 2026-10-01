@@ -62,11 +62,13 @@ revocation inputs; no network request or signing key is accepted by the gate.
 and `provenance/` are v2 or extension planning. They need a new schema, parser,
 and regression tests before they enter Get Started.
 
-## Optional DuckDB analysis extension
+## DuckDB analysis extension
 
-The DuckDB extension is a contract-only, optional sidecar/CLI plan for cross-cluster
-analysis and audit. It is disabled and absent by default, does not enter the WAF request
-path or state stores, and does not expose a network service.
+The planned DuckDB extension uses a host-provided asynchronous one-shot job. It reads
+verified, redacted Parquet snapshots and emits only `analysis-record/v1`. It is not a
+sidecar or arbitrary-SQL CLI, does not enter the WAF request path or state stores, and
+denies network egress. CheeseWAF has not wired the job runtime or audit exporter; the
+contract is not a claim that the extension is available.
 
 See docs/duckdb-extension.md and docs/duckdb-extension.en.md. They define package layout,
 offline/online delivery, signing-root rotation, compatibility gates, and audit restrictions.
