@@ -18,3 +18,8 @@ bootstrap；安装、升级、回滚和集群分发只描述 CWEDP。
 新增页面时，同时维护中文和英文入口，并在页面中链接权威 contract。域名固定为 store.cheesesec.com、ota.cheesesec.com 和 res.cheesesec.com；离线包统一称为 .crp（CheeseWAF Resources Package）。
 
 许可证和第三方资料必须保留来源与版权信息。不要复制闭源手册、凭证或不可再分发素材。
+
+商店/OTA 镜像的 schema 必须与 CheeseSec_Plugin/schema/store-v1/逐字一致，并通过
+scripts/validate_commercial_contracts.py。该门禁检查六类信任级别、固定的
+store/ota/res 端点、内容寻址摘要、审核与撤回的追加历史、离线零联网、34A sidecar
+（禁止 WASM）和 CWEDP pull-only（禁止 Ansible push）。

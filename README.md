@@ -18,9 +18,9 @@ The v1 manifest uses `api_version`, `kind`, `name`, `plugin_id`, `version`,
 `namespace`, `publisher`, `source`, `source_root`, `release_sequence`,
 `digests`, and `artifact`. See the minimal archive in
 [`examples/crp-v1/`](examples/crp-v1/). Its Chinese and English instructions
-are `README.md` and `README.en.md`; it has no signature and cannot be installed.
+are `README.md` and `README.en.md`; it carries two verifiable official Ed25519 signatures but remains contract-only and cannot be installed by itself.
 The mirrored publication schemas are in [`schema/crp-v1/`](schema/crp-v1/);
-they validate shape and archive metadata, not signature trust or activation.
+they validate shape, archive metadata, and offline signature/source-root trust against local roots and validity windows.
 
 | Function | Domain |
 |---|---|
@@ -55,17 +55,36 @@ git diff --check
 The schema copy is kept byte-for-byte aligned with the publication repository's
 canonical schema IDs. Validation dependencies and generated `.crp` files are
 not runtime content and must not be committed.
+Offline verification uses only the local trust-roots, source-registry, and
+revocation inputs; no network request or signing key is accepted by the gate.
 
 `package_id`, `class`, target API, platform/architecture, permissions, SBOMs,
 and `provenance/` are v2 or extension planning. They need a new schema, parser,
 and regression tests before they enter Get Started.
 
-## Optional DuckDB analysis extension
+## DuckDB analysis extension
 
-The DuckDB extension is a contract-only, optional sidecar/CLI plan for cross-cluster
-analysis and audit. It is disabled and absent by default, does not enter the WAF request
-path or state stores, and does not expose a network service.
+The planned DuckDB extension uses a host-provided asynchronous one-shot job. It reads
+verified, redacted Parquet snapshots and emits only `analysis-record/v1`. It is not a
+sidecar or arbitrary-SQL CLI, does not enter the WAF request path or state stores, and
+denies network egress. CheeseWAF has not wired the job runtime or audit exporter; the
+contract is not a claim that the extension is available.
 
 See docs/duckdb-extension.md and docs/duckdb-extension.en.md. They define package layout,
 offline/online delivery, signing-root rotation, compatibility gates, and audit restrictions.
 They are not a claim that the extension is implemented or generally available.
+
+## Store and OTA contract mirror
+
+The bilingual store and OTA contract in docs/store-ota.md mirrors the publication
+repository's machine-readable policies and schemas. policy/, catalog/, and ota/
+are intentionally fail-closed with empty live indexes. The six trust levels,
+immutable release records, append-only withdrawals, offline CRP inputs, 34A
+sidecar descriptor, fixed endpoint policy, and CWEDP pull-only boundary are
+validated by scripts/validate_commercial_contracts.py.
+
+Run the mirror gate locally:
+
+    python3 -m venv /tmp/cheesesec-plugin-docs-ci
+    /tmp/cheesesec-plugin-docs-ci/bin/pip install -r requirements-ci.txt
+    /tmp/cheesesec-plugin-docs-ci/bin/python scripts/validate_commercial_contracts.py
