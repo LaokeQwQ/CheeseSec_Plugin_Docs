@@ -8,6 +8,7 @@
 - 不进入请求热路径，不写 PG、native-raft 或 Redis，不读取正在写入的共享 DuckDB 文件，也不提供常驻监听端口或远程数据库服务。
 - 任务只读取受信导出器生成的脱敏 Parquet 快照，并使用仓库登记的参数化查询模板；不得执行用户提供的任意 SQL。输入验签、文件摘要与 schema 校验、OS 沙箱和资源监督都必须由宿主在启动 DuckDB 前后落实，目前尚无运行时证据。
 - 唯一输出是 `analysis-record/v1`。`contain`、`isolate` 等 recommendation 只是分析标签，不能转换成 `risk-hint/v1`、候选策略、ACL、挑战、封禁或策略更新。
+- 宿主在核心校验完成后统一对 manifest 和 `analysis-record/v1` 签章；`integrity` 使用 `cheesewaf-extension-output-attestation-v1` 域分离，签名输入绑定规范化 payload 的 SHA-256、`key_id` 和 UTC `signed_at`。插件、DuckDB 作业和 Parquet 文件不持有宿主私钥，验收失败时丢弃并审计。
 - DuckDB 任务禁止网络出站，不申请 Socket Lease，也不访问在线目录或资源服务。
 
 ## CRP v1 边界
@@ -64,4 +65,4 @@ DuckDB 由宿主单独提供并登记版本。当前 CRP v1 解析器只校验�
 
 ## 验收状态
 
-本文件及英文对照描述的是扩展契约，不代表 DuckDB 作业运行时、审计导出器、安装器、OTA、CWEDP 拉取或热加载已经实现、发布或支持。当前门禁只验证 schema、descriptor、fixture 和静态契约，不证明输入签名、Parquet 内容、SQL 模板或 OS 沙箱已在运行时得到强制。接入前必须补齐这些运行时门禁、资源限制与隔离测试，并由 CheeseWAF 阶段看板单独记录。
+本文件及英文对照描述的是扩展契约，不代表 DuckDB 作业运行时、审计导出器、安装器、OTA、CWEDP 拉取或热加载已经实现、发布或支持。当前门禁只验证 schema、descriptor、fixture、宿主签章字段和静态契约，不证明输入签名、Parquet 内容、SQL 模板、宿主签章验签或 OS 沙箱已在运行时得到强制。接入前必须补齐这些运行时门禁、资源限制与隔离测试，并由 CheeseWAF 阶段看板单独记录。

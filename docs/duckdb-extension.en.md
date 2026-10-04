@@ -8,6 +8,7 @@ This contract maps to roadmap items 32C, 33B, and 34A+. It defines delivery boun
 - It never enters the request hot path, writes PG/native-raft/Redis, shares a writable DuckDB file, or exposes a listening or remote database service.
 - A job reads only redacted Parquet snapshots from a trusted exporter and uses a parameterized query template registered by this repository. It must not execute arbitrary user SQL. The host must verify input signatures, file digests and schema, and enforce an OS sandbox and resource limits around DuckDB; none of these runtime controls has implementation evidence yet.
 - The only output is `analysis-record/v1`. Recommendations such as `contain` or `isolate` are analysis labels; they cannot become `risk-hint/v1`, policy candidates, ACLs, challenges, blocks, or policy updates.
+- After core validation, the host signs the manifest and `analysis-record/v1` with the `cheesewaf-extension-output-attestation-v1` domain. The signature binds the canonical payload SHA-256, `key_id`, and UTC `signed_at`. Plugins, DuckDB jobs, and Parquet files never hold the host private key; failed validation is discarded and audited.
 - DuckDB jobs deny network egress, request no Socket Lease, and do not access online catalogs or resource services.
 
 ## CRP v1 boundary
@@ -88,4 +89,4 @@ The extension reads only signature-verified and validated redacted Parquet snaps
 
 ## Acceptance status
 
-These documents define an extension contract; they do not mean that the DuckDB job runtime, audit exporter, installer, OTA, CWEDP pull, or hot loading is implemented, released, or supported. Current gates validate schemas, descriptors, fixtures, and static contracts. They do not prove runtime enforcement of input signatures, Parquet contents, SQL templates, or OS sandboxing. Before integration, add runtime gates, resource limits, and isolation tests to the CheeseWAF stage board.
+These documents define an extension contract; they do not mean that the DuckDB job runtime, audit exporter, installer, OTA, CWEDP pull, or hot loading is implemented, released, or supported. Current gates validate schemas, descriptors, fixtures, host-attestation fields, and static contracts. They do not prove runtime enforcement of input signatures, Parquet contents, SQL templates, host signature verification, or OS sandboxing. Before integration, add runtime gates, resource limits, and isolation tests to the CheeseWAF stage board.
