@@ -75,7 +75,13 @@ CheeseWAF 阶段看板有独立证据前，不得写成已交付能力。
 
 - `package_id`、`class`、目标 CheeseWAF/扩展 API、平台/架构、最低审计事件版本和权限声明；
 - `provenance/` 目录，以及 SBOM、构建记录和发布者声明；
-- DuckDB 扩展专用字段、宿主版本矩阵和分析数据约束。
+- DuckDB 扩展专用字段、宿主版本矩阵和分析数据约束；
+- 通知提供商包（`crp.cheesewaf.io/notifier/v1`）。它只描述核心通知器的投递格式，
+  没有可执行体，也没有插件出站能力。
 
 这些字段和目录需要新的 schema、解析器、签名覆盖范围、迁移说明和回归测试。完成这些工作前，
-它们只能写在标为「规划」的 v2 或 DuckDB 契约中。
+它们只能写在标为「规划」的 v2、DuckDB 或通知提供商契约中。
+
+通知 provider 不属于 sidecar 能力。当前 sidecar 只允许 `observe`、`candidate_snapshot`、
+`hint` 和 `health`，`egress` 固定为 `deny`；发送只能由核心通知器完成。详见
+[通知提供商包契约](notification-plugins.md)。

@@ -100,8 +100,15 @@ Started example:
 - `package_id`, `class`, target CheeseWAF/extension API, platform/architecture,
   minimum audit-event version, and permission declarations;
 - a `provenance/` directory containing SBOMs, build records, or publisher statements;
-- DuckDB-specific fields, host-version matrices, and analysis-data constraints.
+- DuckDB-specific fields, host-version matrices, and analysis-data constraints;
+- notifier provider packs (`crp.cheesewaf.io/notifier/v1`). They only describe a
+  delivery format for the core notifier and carry no executable or plugin egress.
 
 These items require a new schema, parser, signature coverage, migration notes,
-and regression tests. Until then, keep them in the planned v2 or DuckDB contract
-and do not describe them as current runtime behavior.
+and regression tests. Until then, keep them in the planned v2, DuckDB, or
+notifier provider contract and do not describe them as current runtime behavior.
+
+A notifier provider is not a sidecar capability. The current sidecar allows only
+`observe`, `candidate_snapshot`, `hint`, and `health`, and fixes `egress` to
+`deny`; only the core notifier may deliver messages. See the
+[Notifier Provider Pack Contract](notification-plugins.en.md).
