@@ -74,6 +74,15 @@ See docs/duckdb-extension.md and docs/duckdb-extension.en.md. They define packag
 offline/online delivery, signing-root rotation, compatibility gates, and audit restrictions.
 They are not a claim that the extension is implemented or generally available.
 
+## Notifier provider packs
+
+The planned notifier provider pack contract (`crp.cheesewaf.io/notifier/v1`)
+describes a delivery destination format for the core notifier. It is not a
+sidecar, carries no executable, and gains no plugin network egress; its
+`publication` block stays `planned` and non-installable. The schema and Feishu
+example are mirrored in `schema/extensions-v1/` and `examples/extensions/`.
+See docs/notification-plugins.md and docs/notification-plugins.en.md.
+
 ## Store and OTA contract mirror
 
 The bilingual store and OTA contract in docs/store-ota.md mirrors the publication
