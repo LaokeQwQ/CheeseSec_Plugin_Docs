@@ -10,6 +10,8 @@
 - Minimal CRP v1 example：../examples/crp-v1/README.en.md
 - 商店与 OTA 契约：store-ota.md
 - Store and OTA contract：store-ota.en.md
+- 通知提供商包契约：notification-plugins.md
+- Notifier Provider Pack Contract：notification-plugins.en.md
 
 ## 文档状态
 
