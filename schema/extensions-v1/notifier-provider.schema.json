@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://store.cheesesec.com/schema/extensions/v1/notifier-provider.schema.json",
-  "title": "CheeseWAF notifier provider pack (planned)",
-  "description": "A descriptor-only notifier provider contract. It describes a destination format for the core notifier. It carries no executable, no plugin network egress, and no installable CRP binding.",
+  "title": "CheeseWAF notifier provider pack",
+  "description": "A declarative notifier provider descriptor. The core loads it from the local plugin index and owns delivery, network egress, retries, and credentials. It carries no executable, no plugin network egress, and no installable CRP binding.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -22,8 +22,22 @@
   "properties": {
     "api_version": { "const": "crp.cheesewaf.io/notifier/v1" },
     "provider_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$" },
-    "type": { "enum": ["webhook", "dingtalk", "feishu", "wecom", "telegram", "email"] },
+    "type": {
+      "description": "Provider type. The six core types are implemented in-process and cannot be declared by a pack; a pack must introduce a different type.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,63}$",
+      "not": { "enum": ["webhook", "dingtalk", "feishu", "wecom", "telegram", "email"] }
+    },
     "version": { "$ref": "#/$defs/version" },
+    "host_compatibility": {
+      "description": "Inclusive host version range. Bounds use dotted numeric versions; a pre-release suffix does not affect ordering. Empty or omitted bounds are open-ended.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": { "$ref": "#/$defs/version_bound" },
+        "max": { "$ref": "#/$defs/version_bound" }
+      }
+    },
     "namespace": { "$ref": "#/$defs/namespace" },
     "source": { "$ref": "#/$defs/identifier" },
     "source_root": { "$ref": "#/$defs/identifier" },
@@ -95,7 +109,7 @@
       "additionalProperties": false,
       "required": ["status", "installable", "crp_binding"],
       "properties": {
-        "status": { "const": "planned" },
+        "status": { "const": "loadable" },
         "installable": { "const": false },
         "crp_binding": { "const": "descriptor-only" }
       }
@@ -123,6 +137,10 @@
     "version": {
       "type": "string",
       "pattern": "^[0-9]+([.][0-9]+){0,2}([-][0-9A-Za-z.-]+)?([+][0-9A-Za-z.-]+)?$"
+    },
+    "version_bound": {
+      "type": "string",
+      "pattern": "^[0-9]+([.][0-9]+){0,2}$"
     }
   }
 }
