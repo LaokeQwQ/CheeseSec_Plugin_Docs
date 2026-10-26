@@ -51,6 +51,9 @@ jobs:
       - name: Validate store, OTA, sidecar and CWEDP contract mirror
         run: python scripts/validate_commercial_contracts.py
 
+      - name: Validate notifier provider contract
+        run: python scripts/validate_notifier_contracts.py
+
       - name: Validate offline verifier entry point
         run: python scripts/verify_offline_import.py --help
 
