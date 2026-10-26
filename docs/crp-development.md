@@ -39,7 +39,7 @@ Manifest 使用 `crp.cheesewaf.io/v1`。当前解析器允许的字段如下：
 
 MD5 与 SHA-1 只用于传输完整性和断点续传。SHA-256 是内容身份。摘要缺失或不匹配时必须拒绝，管理员确认不能绕过。
 
-`signatures/manifest.json` 的元素使用当前 `Signature` 字段：`key_id`、`algorithm`、`value` 和可选的 `signed_at`。示例中的空数组只用于验证归档布局，不表示签名通过；真正的 `Import` 仍需要满足信任根和阈值签名策略。
+`signatures/manifest.json` 的元素使用当前 `Signature` 字段：`key_id`、`algorithm`、`value`、`source_root`、`trust_level`、`release_sequence`、`manifest_sha256`、`signed_at` 和 `expires_at`。示例包含两个可验证的 official Ed25519 签名；真正的 `Import` 仍需要满足本地信任根、阈值、有效期和撤销策略。
 
 最小、可解析但不具备安装授权的示例见 [`examples/crp-v1/`](../examples/crp-v1/)。
 
@@ -66,7 +66,7 @@ MD5 与 SHA-1 只用于传输完整性和断点续传。SHA-256 是内容身份�
 
 `build → test → sign → publish → observe → staged → canary → promote`。
 
-回滚生成新的控制面 revision，不重放旧包。安装、OTA、CWEDP 和热载在
+目标生命周期要求回滚生成新的控制面 revision，不重放旧包；当前 CheeseWAF 只提供本地 RuntimeStore 的 staged/promote/rollback contract，尚未接入独立控制面。CheeseWAF 独立 `cheesewaf-control` 入口的命令、状态接口和 fail-closed 启动边界见[独立控制面运行时文档](https://docs.cheesesec.com/zh/docs/cheesewaf/control-plane-runtime/)，该入口不提供插件安装、OTA、CWEDP 或热载执行。安装、OTA、CWEDP 和热载在
 CheeseWAF 阶段看板有独立证据前，不得写成已交付能力。
 
 ## v2 和扩展规划
@@ -75,7 +75,13 @@ CheeseWAF 阶段看板有独立证据前，不得写成已交付能力。
 
 - `package_id`、`class`、目标 CheeseWAF/扩展 API、平台/架构、最低审计事件版本和权限声明；
 - `provenance/` 目录，以及 SBOM、构建记录和发布者声明；
-- DuckDB 扩展专用字段、宿主版本矩阵和分析数据约束。
+- DuckDB 扩展专用字段、宿主版本矩阵和分析数据约束；
+- 通知提供商包（`crp.cheesewaf.io/notifier/v1`）。它只描述核心通知器的投递格式，
+  没有可执行体，也没有插件出站能力。
 
 这些字段和目录需要新的 schema、解析器、签名覆盖范围、迁移说明和回归测试。完成这些工作前，
-它们只能写在标为「规划」的 v2 或 DuckDB 契约中。
+它们只能写在标为「规划」的 v2、DuckDB 或通知提供商契约中。
+
+通知 provider 不属于 sidecar 能力。当前 sidecar 只允许 `observe`、`candidate_snapshot`、
+`hint` 和 `health`，`egress` 固定为 `deny`；发送只能由核心通知器完成。详见
+[通知提供商包契约](notification-plugins.md)。
